@@ -43,7 +43,6 @@ const Navbar = () => {
       };
       registerUser();
     }
-
   }, [isSignedIn]);
 
   return (
@@ -105,7 +104,7 @@ const Navbar = () => {
                 </button>
               </SignInButton>
             </SignedOut>
-  
+
             <SignedIn>
               <UserButton
                 appearance={{

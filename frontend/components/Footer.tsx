@@ -1,15 +1,78 @@
+import { FaGithub, FaLinkedin, FaTwitter, FaInstagram } from "react-icons/fa";
+
 const Footer = () => {
   return (
-    <footer className="backdrop-blur-md bg-white/5 border-t border-white/10 text-white text-center py-6 mt-2 overflow-x-hidden">
+    <footer className="relative bg-black text-gray-300 text-center py-8 mt-8 overflow-x-hidden">
+      {/* Gradient separator line */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-500"></div>
+
+      {/* Footer Content */}
       <p className="text-base opacity-90">
-        © {new Date().getFullYear()} <span className="font-semibold">Resume Analyzer</span> · Built with ❤️ by Vivek Raj
+        © {new Date().getFullYear()}{" "}
+        <span className="font-semibold bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
+          DevXVitals
+        </span>{" "}
+        · Built with ❤️ by Vivek Raj
       </p>
-      <div className="mt-3 flex justify-center space-x-5 text-sm opacity-80">
-        <a href="#privacy" className="hover:opacity-100 transition">Privacy Policy</a>
-        <span>•</span>
-        <a href="#terms" className="hover:opacity-100 transition">Terms</a>
-        <span>•</span>
-        <a href="#contact" className="hover:opacity-100 transition">Contact</a>
+
+      {/* Links */}
+      <div className="mt-4 flex justify-center space-x-6 text-sm">
+        <a
+          href="#privacy"
+          className="hover:text-purple-400 hover:underline transition-colors duration-300"
+        >
+          Privacy Policy
+        </a>
+        <span className="text-gray-500">•</span>
+        <a
+          href="#terms"
+          className="hover:text-purple-400 hover:underline transition-colors duration-300"
+        >
+          Terms
+        </a>
+        <span className="text-gray-500">•</span>
+        <a
+          href="#contact"
+          className="hover:text-purple-400 hover:underline transition-colors duration-300"
+        >
+          Contact
+        </a>
+      </div>
+
+      {/* Social Media Icons */}
+      <div className="mt-6 flex justify-center space-x-6 text-xl">
+        <a
+          href="https://github.com/yourprofile"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-white transition-transform transform hover:scale-110"
+        >
+          <FaGithub />
+        </a>
+        <a
+          href="https://linkedin.com/in/yourprofile"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-blue-400 transition-transform transform hover:scale-110"
+        >
+          <FaLinkedin />
+        </a>
+        <a
+          href="https://twitter.com/yourprofile"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-sky-400 transition-transform transform hover:scale-110"
+        >
+          <FaTwitter />
+        </a>
+        <a
+          href="https://instagram.com/yourprofile"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-pink-400 transition-transform transform hover:scale-110"
+        >
+          <FaInstagram />
+        </a>
       </div>
     </footer>
   );

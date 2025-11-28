@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gradient-to-br from-[#ff00cc] via-[#7a33cc] to-[#333399]
+  @apply bg-gradient-to-br from-white to-[#f3f4f6] text-gray-900;
+}
+
+/* Custom vertical scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  /* reduced width */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ec4899, #6366f1);
+  /* pink → purple gradient */
+  border-radius: 9999px;
+  /* fully rounded */
 }
