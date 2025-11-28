@@ -1,5 +1,4 @@
 import UserSubscription from "../../models/user_subscription.model.js";
-import ProductSubscriptionDetail from "../../models/product_subscription_detail.model.js";
 import Users from "../../models/users.model.js";
 
 const calculateEndDate = (subscriptionPlan) => {
@@ -23,35 +22,14 @@ export const set_user_subscription = async (req, res) => {
             productName,
             subscriptionType,
             subscriptionPlan,
-            payment_amount
         } = await req.body;
 
-        if (!email || !productName || !subscriptionType || !subscriptionPlan || !payment_id || !payment_amount) {
+        if (!payment_id ) {
             return res.status(400).json({
                 success: false,
-                message: "Missing required fields"
+                message: "Cannot process your request. Missing payment ID."
             });
         }
-
-        const productSubscriptionDetail = await ProductSubscriptionDetail.findOne({ productName });
-
-        if (!productSubscriptionDetail) {
-            return res.status(404).json({
-                success: false,
-                message: "The product you want to subscribe to does not exist"
-            });
-        }
-
-        // Checking if payment amount  altered or not by user
-        if (subscriptionType === "basic" && ((subscriptionPlan === "monthly" && payment_amount !== productSubscriptionDetail.basic.monthly) || (subscriptionPlan === "yearly" && payment_amount !== productSubscriptionDetail.basic.yearly)) ||
-            subscriptionType === "premium" && ((subscriptionPlan === "monthly" && payment_amount !== productSubscriptionDetail.premium.monthly) || (subscriptionPlan === "yearly" && payment_amount !== productSubscriptionDetail.premium.yearly)) ||
-            subscriptionType === "enterprise" && ((subscriptionPlan === "monthly" && payment_amount !== productSubscriptionDetail.enterprise.monthly) || (subscriptionPlan === "yearly" && payment_amount !== productSubscriptionDetail.enterprise.yearly))) {
-            return res.status(400).json({
-                success: false,
-                message: "Payment amount has been altered. Subscription creation failed. Reporting to admin."
-            });
-        }
-
 
         const endDate = calculateEndDate(subscriptionPlan);
 
@@ -64,13 +42,11 @@ export const set_user_subscription = async (req, res) => {
             });
         }
 
-        let userDetail = await UserSubscription.findOne({ email });
+        let userSubscriptionDetail = await UserSubscription.findOne({ email });
 
-        // userDetail :- subscription detail of the user
-
-        // CASE 1: USERDETAIL NOT FOUND → CREATE USER WITH FIRST SUBSCRIPTION
-        if (!userDetail) {
-            userDetail = await UserSubscription.create({
+        // CASE 1: userSubscriptionDetail NOT FOUND → CREATE USER WITH FIRST SUBSCRIPTION
+        if (!userSubscriptionDetail) {
+            userSubscriptionDetail = await UserSubscription.create({
                 email,
                 subscriptions: [{
                     payment_id,
@@ -83,24 +59,24 @@ export const set_user_subscription = async (req, res) => {
                 }]
             });
 
-            user.subscriptions.push(userDetail._id);
+            user.subscriptions.push(userSubscriptionDetail._id);
             await user.save();
 
             return res.status(201).json({
                 success: true,
                 message: "Subscription created successfully",
-                data: userDetail
+                data: userSubscriptionDetail
             });
         }
 
-        // CASE 2: USERDETAIL EXISTS → CHECK IF PRODUCT EXISTS
-        const index = userDetail.subscriptions.findIndex(
+        // CASE 2: userSubscriptionDetail EXISTS → CHECK IF PRODUCT EXISTS
+        const index = userSubscriptionDetail.subscriptions.findIndex(
             sub => sub.productName === productName
         );
 
         // A. PRODUCT NOT FOUND → ADD NEW SUBSCRIPTION
         if (index === -1) {
-            userDetail.subscriptions.push({
+            userSubscriptionDetail.subscriptions.push({
                 payment_id,
                 productName,
                 subscriptionType,
@@ -110,72 +86,49 @@ export const set_user_subscription = async (req, res) => {
                 isActive: true
             });
 
-            await userDetail.save();
+            await userSubscriptionDetail.save();
 
             return res.json({
                 success: true,
                 message: "New product subscription added",
-                data: userDetail
+                data: userSubscriptionDetail
             });
         }
 
-        // B. PRODUCT FOUND → CHECK UPGRADE POSSIBILITY
-        const existingSub = userDetail.subscriptions[index];
-
-        const subscriptionRanks = {
-            basic: 1,
-            premium: 2,
-            enterprise: 3
-        };
-
-        const oldRank = subscriptionRanks[existingSub.subscriptionType];
-        const newRank = subscriptionRanks[subscriptionType];
+        // B. PRODUCT FOUND → Apply CHhanges
+        const existingSub = userSubscriptionDetail.subscriptions[index];
 
         // if isActive is false, allow any change
         if (!existingSub.isActive) {
-            userDetail.subscriptions[index].payment_id = payment_id;
-            userDetail.subscriptions[index].subscriptionType = subscriptionType;
-            userDetail.subscriptions[index].subscriptionPlan = subscriptionPlan;
-            userDetail.subscriptions[index].startDate = new Date();
-            userDetail.subscriptions[index].endDate = endDate;
-            userDetail.subscriptions[index].isActive = true;
-            await userDetail.save();
+            userSubscriptionDetail.subscriptions[index].payment_id = payment_id;
+            userSubscriptionDetail.subscriptions[index].subscriptionType = subscriptionType;
+            userSubscriptionDetail.subscriptions[index].subscriptionPlan = subscriptionPlan;
+            userSubscriptionDetail.subscriptions[index].startDate = new Date();
+            userSubscriptionDetail.subscriptions[index].endDate = endDate;
+            userSubscriptionDetail.subscriptions[index].isActive = true;
+            await userSubscriptionDetail.save();
 
             return res.json({
                 success: true,
                 message: `Congrates you subscribed again to ${subscriptionType} plan`,
-                data: userDetail
-            });
-        }
-
-        if (newRank === oldRank) {
-            return res.status(400).json({
-                success: false,
-                message: `User already has ${existingSub.subscriptionType} plan for this product`
-            });
-        }
-
-        if (newRank < oldRank) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot downgrade subscription from ${existingSub.subscriptionType} to ${subscriptionType}`
+                data: userSubscriptionDetail
             });
         }
 
         // C. VALID UPGRADE → APPLY UPDATE
-        userDetail.subscriptions[index].payment_id = payment_id;
-        userDetail.subscriptions[index].subscriptionType = subscriptionType;
-        userDetail.subscriptions[index].subscriptionPlan = subscriptionPlan;
-        userDetail.subscriptions[index].startDate = new Date();
-        userDetail.subscriptions[index].endDate = endDate;
-        userDetail.subscriptions[index].isActive = true;
+        userSubscriptionDetail.subscriptions[index].payment_id = payment_id;
+        userSubscriptionDetail.subscriptions[index].subscriptionType = subscriptionType;
+        userSubscriptionDetail.subscriptions[index].subscriptionPlan = subscriptionPlan;
+        userSubscriptionDetail.subscriptions[index].startDate = new Date();
+        userSubscriptionDetail.subscriptions[index].endDate = endDate;
+        userSubscriptionDetail.subscriptions[index].isActive = true;
 
-        await userDetail.save();
+        await userSubscriptionDetail.save();
 
         return res.json({
             success: true,
             message: `Subscription upgraded to ${subscriptionType} plan`,
-            data: userDetail
+            data: userSubscriptionDetail
         });
 
     } catch (error) {
